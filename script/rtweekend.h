@@ -15,6 +15,12 @@ using std::sqrt;
 const double infinity=std::numeric_limits<double>::infinity();
 const double pi=3.1415926535897932385;
 
+//Debug variales
+long long hit_search_count = 0;
+int ray_count = 0;
+int pixel_count = 0;
+
+
 //Utility Functions
 
 inline double degrees_to_radians(double degrees){
@@ -27,6 +33,14 @@ inline double random_double(){
 
 inline double random_double(double min,double max){
     return min+(max-min)*random_double();
+}
+
+inline int random_int(){
+    return (int)random_double();//RAND_MAX=2^8-1,是一个2字节数
+}
+
+inline int random_int(int min,int max){
+    return (int)random_double(min,max);
 }
 
 inline double clamp(double x,double min,double max){

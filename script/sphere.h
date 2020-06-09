@@ -10,7 +10,7 @@ class sphere: public hittable{
             :center(cen),radius(r),mat_ptr(m){};
 
         virtual bool hit(const ray& r,double t_min,double t_max,hit_record& rec) const;
-
+        virtual bool bounding_box(double t0,double t1,aabb& output_box)const;
     public:
         point3 center;
         double radius;
@@ -23,6 +23,8 @@ bool sphere::hit(const ray& r,double t_min,double t_max,hit_record& rec) const{
     auto half_b=dot(r.direction(),oc);
     auto c=dot(oc,oc)-radius*radius;
     auto discriminant =half_b*half_b-a*c;
+
+    hit_search_count++;
 
     if (discriminant>0){
         auto root=sqrt(discriminant);
@@ -48,6 +50,13 @@ bool sphere::hit(const ray& r,double t_min,double t_max,hit_record& rec) const{
         }
     }
     return false;
+}
+bool sphere::bounding_box(double t0,double t1,aabb& output_box)const{
+    output_box=aabb(
+        center-vec3(radius,radius,radius),
+        center+vec3(radius,radius,radius)
+    );
+    return true;
 }
 
 #endif
