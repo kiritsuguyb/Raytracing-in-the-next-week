@@ -17,8 +17,8 @@ bvh_node random_scene(){
     auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
     world.add(make_shared<sphere>(point3(0,-1000,0), 1000, ground_material));
     
-    for (int a = -3; a < 3; a++){
-        for(int b=-3;b<3;b++){
+    for (int a = -16; a < 16; a++){
+        for(int b=-16;b<16;b++){
             auto choose_mat=random_double();
             point3 center(a+0.9*random_double(),0.2,b+0.9*random_double());
             if ((center - point3(4, 0.2, 0)).length() > 0.9) {
@@ -89,7 +89,7 @@ int main(){
 	start_time = clock();
 
 	ofstream fs;
-	fs.open("..\\PPMImageResults\\triangle.ppm");
+	fs.open("triangle.ppm");
 	fs.clear();
 
     const auto aspect_ratio=16.0/9.0;
@@ -112,10 +112,10 @@ int main(){
 	cerr << "Time cost:" << double(clock() - temp_time) / CLOCKS_PER_SEC << "s" << endl << endl;
     
 
-    point3 lookfrom(13,2,3);
+    point3 lookfrom(18,4,3);
     point3 lookat(0,0,0);
     vec3 vup(0,1,0);
-    auto dist_to_focus=10;
+    auto dist_to_focus=15;
     auto aperture=0.1;
     
     camera cam(lookfrom,lookat,vup,20,aspect_ratio,aperture,dist_to_focus,0.0,1.0);
@@ -139,7 +139,7 @@ int main(){
             color pixel_color(0,0,0);
             for (int s = 0; s < samples_per_pixel; s++){
                 auto u=double(i+random_double())/(image_width-1);
-                auto v=double(image_height-1-j+random_double())/(image_height-1);
+                auto v=double(j+random_double())/(image_height-1);
                 ray r=cam.get_ray(u,v);
                 pixel_color+=ray_color(r,world,max_depth);
             }
