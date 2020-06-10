@@ -34,3 +34,34 @@ The remaining troublesome case if we do that is if \(b_x = 0\) and either \(x_0 
 Now, let’s look at that overlap function. Suppose we can assume the intervals are not reversed (so the first value is less than the second value in the interval) and we want to return true in that case. The boolean overlap that also computes the overlap interval \((f, F)\) of intervals \((d, D)\) and \((e, E)\) would be: 
 
 If there are any NaNs running around there, the compare will return false so we need to be sure our bounding boxes have a little padding if we care about grazing cases (and we probably should because in a ray tracer all cases come up eventually). With all three dimensions in a loop, and passing in the interval \([t_{min}\), \(t_{max}]\), we get: 
+
+
+#### Textrues
+A texture in graphics usually means a function that makes the colors on a surface procedural. This procedure can be synthesis code, or it could be an image lookup, or a combination of both. We will first make all colors a texture. Most programs keep constant rgb colors and textures in different classes, so feel free to do something different, but I am a big believer in this architecture because being able to make any color a texture is great. 
+
+We'll need to update the hit_record structure to store the U,V surface coordinates of the ray-object hit point. 
+
+We will also need to compute \((u,v)\) texture coordinates for hittables. 
+
+For spheres, this is usually based on some form of longitude and latitude, i.e., spherical coordinates. So if we have a \((\theta,\phi)\) in spherical coordinates, we just need to scale \(\theta\) and \(\phi\) to fractions. If \(\theta\) is the angle down from the pole, and \(\phi\) is the angle around the axis through the poles, the normalization to \([0,1]\) would be: 
+
+$$ u = \frac{\phi}{2\pi} $$ $$ v = \frac{\theta}{\pi} $$ 
+
+
+To compute \(\theta\) and \(\phi\), for a given hitpoint, the formula for spherical coordinates of a unit radius sphere on the origin is: 
+
+$$ x = \cos(\phi) \cos(\theta) $$ $$ y = \sin(\phi) \cos(\theta) $$ $$ z = \sin(\theta) $$ 
+
+
+We need to invert that. Because of the lovely <cmath> function atan2() which takes any number proportional to sine and cosine and returns the angle, we can pass in \(x\) and \(y\) (the \(\cos(\theta)\) cancel): 
+
+$$ \phi = \text{atan2}(y, x) $$ 
+
+
+The \(atan2\) returns values in the range \(-\pi\) to \(\pi\), so we need to take a little care there. The \(\theta\) is more straightforward: 
+
+$$ \theta = \text{asin}(z) $$ 
+which returns numbers in the range \(-\pi/2\) to \(\pi/2\). 
+
+
+So for a sphere, the \((u,v)\) coord computation is accomplished by a utility function that expects things on the unit sphere centered at the origin. The call inside sphere::hit should be: 

@@ -3,6 +3,7 @@
 #include "vec3.h"
 #include "ray.h"
 #include "hittable.h"
+#include "texture.h"
 
 class material{
     public:
@@ -18,34 +19,37 @@ double schlick(double cosine,double ref_idx){
 }
 class lambertian: public material{
     public:
-        lambertian(const color& a): albedo(a){}
+        lambertian(const shared_ptr<texture> a): albedo(a){}
+		lambertian(const color a) : albedo(make_shared<solid_color>(a)) {}
 
         virtual bool scatter(
             const ray& r_in,const hit_record& rec,color& attenuation,ray& scattered
         )const{
             vec3 scatter_direction=rec.normal+random_unit_vector();
             scattered=ray(rec.p,scatter_direction,r_in.time());
-            attenuation=albedo;
+            attenuation=albedo->value(rec.u,rec.v,rec.p);
             return true;
         }
     public:
-        color albedo;
+        shared_ptr<texture> albedo;
 };
 
 class metal:public material{
     public:
-        metal(const color& a,double f):albedo(a),fuzz(f){}
+        metal(const shared_ptr<texture> a,double f):albedo(a),fuzz(f){}
+		
+        metal(const color a,double f):albedo(make_shared<solid_color>(a)),fuzz(f){}
 
         virtual bool scatter(
             const ray& r_in,const hit_record& rec,color& attenuation,ray& scattered
         )const{
             vec3 reflected=reflect(unit_vector(r_in.direction()),rec.normal);
             scattered =ray(rec.p,reflected+fuzz*random_in_unit_sphere());
-            attenuation=albedo;
+            attenuation=albedo->value(rec.u,rec.v,rec.p);
             return (dot(scattered.direction(),rec.normal)>0);
         }
     public:
-        color albedo;
+		shared_ptr<texture> albedo;
         double fuzz;
 };
 

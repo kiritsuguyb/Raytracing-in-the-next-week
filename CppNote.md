@@ -89,6 +89,7 @@ int main(){
 6.关于纯虚函数
 声明虚函数时在函数声明后加`=0`，告知编译器这是一个虚函数，只是一个函数声明而不具备函数功能，具体函数体留待派生类来实现，因此这里不需要使用`{}`来定义函数体。
 ```c++
+
 class hittable{
     public:
         virtual bool hit(const ray& r,double t_min,double t_max,hit_record& rec)const=0;
