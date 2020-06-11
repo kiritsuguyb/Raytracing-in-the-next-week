@@ -61,9 +61,9 @@ bvh_node random_scene(){
 hittable_list two_perlin_sphere() {
 	hittable_list objects;
 
-	auto pertex = make_shared<noise_texture>();
-	objects.add(make_shared<sphere>(point3(0, 0, 0), 1000, make_shared<lambertian>(pertex)));
-	//objects.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(pertex)));
+	auto pertex = make_shared<noise_texture>(2);
+	objects.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(pertex)));
+	objects.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(pertex)));
 
 	return objects;
 }
@@ -102,9 +102,9 @@ int main(){
 	fs.clear();
 
     const auto aspect_ratio=16.0/9.0;
-    const int image_width=1000;
+    const int image_width=300;
     const int image_height=static_cast<int>(image_width/aspect_ratio);
-    const int samples_per_pixel=200;
+    const int samples_per_pixel=50;
     const int max_depth=10;
 
     fs<<"P3\n"<<image_width<<' '<<image_height<<"\n255\n";
@@ -121,13 +121,13 @@ int main(){
 	cerr << "Time cost:" << double(clock() - temp_time) / CLOCKS_PER_SEC << "s" << endl << endl;
     
 
-    point3 lookfrom(0,0,-2000);
+    point3 lookfrom(13,2,3);
     point3 lookat(0,0,0);
     vec3 vup(0,1,0);
-    auto dist_to_focus=2000;
+    auto dist_to_focus=10;
     auto aperture=0.0;
     
-    camera cam(lookfrom,lookat,vup,60,aspect_ratio,aperture,dist_to_focus,0.0,1.0);
+    camera cam(lookfrom,lookat,vup,20,aspect_ratio,aperture,dist_to_focus,0.0,1.0);
 
 	cerr << "----------"<< setw(20) << "Start raytracing." << "----------" << endl << endl;
 
@@ -156,6 +156,7 @@ int main(){
 		<< setw(20) << "Ray count:" << ray_count << '\n'
 		<< setw(20) << "Hitsearch count:" << hit_search_count << '\n'
 		<< setw(20) << ' ' << endl;
+
 	cerr << endl << "**********" << setw(20) << "Rartracing Done." << "**********" << endl;
     cerr<<"Time cost:"<<double(clock() -temp_time)/CLOCKS_PER_SEC<<"s"<<endl << endl;
 

@@ -1,7 +1,7 @@
 #pragma once
 #include "rtweekend.h"
 #include "perlin.h"
-
+#include <cmath>
 class texture {
 	public:
 		virtual color value(double u, double v, const point3& p)const = 0;
@@ -41,9 +41,11 @@ class checker_texture : public texture {
 class noise_texture :public texture {
 	public:
 		noise_texture(){}
+		noise_texture(double sc=1.0):scale(sc){}
 		virtual color value(double u, double v, const point3& p)const {
-			return color(1, 1, 1)*noise.pattern_noise(p);
+			return color(1, 1, 1)*noise.noise(scale * p);
 		}
 	public:
 		perlin noise;
+		double scale;
 };
