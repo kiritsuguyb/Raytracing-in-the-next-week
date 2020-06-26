@@ -91,6 +91,7 @@ bool bvh_node::bounding_box(double t0,double t1,aabb& output_box)const{
 }
 bool bvh_node::hit(const ray& r,double t_min,double t_max,hit_record& rec)const{
 
+	hit_search_count++;
     if (!box.hit(r,t_min,t_max))return false;
     
     bool hit_left=left->hit(r,t_min,t_max,rec);

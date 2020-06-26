@@ -38,7 +38,6 @@ bool moving_sphere::hit(const ray& r,double t_min,double t_max,hit_record& rec)c
     auto half_b=dot(r.direction(),oc);
     auto c=dot(oc,oc)-radius*radius;
     auto discriminant =half_b*half_b-a*c;
-    hit_search_count++;
 
     if (discriminant>0){
         auto root=sqrt(discriminant);

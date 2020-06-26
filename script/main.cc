@@ -10,6 +10,9 @@
 #include "camera.h"
 #include "material.h"
 #include "bvh.h"
+#include "aarect.h"
+#include "box.h"
+#include "constant_medium.h"
 
 using namespace std;
 bvh_node random_scene(){
@@ -61,13 +64,88 @@ bvh_node random_scene(){
 hittable_list two_perlin_sphere() {
 	hittable_list objects;
 
-	auto pertex = make_shared<noise_texture>(2);
+	auto pertex = make_shared<noise_texture>(4);
 	objects.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(pertex)));
 	objects.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(pertex)));
 
 	return objects;
 }
-color ray_color(const ray& r,const hittable& world,int depth){
+hittable_list earth() {
+	hittable_list objects;
+	auto earth_texture = make_shared<image_texture>("earthmap.jpg");
+	auto earth_surface = make_shared<lambertian>(earth_texture);
+	auto globe = make_shared<sphere>(point3(0, 0, 0), 2, earth_surface);
+	objects.add(globe);
+
+	return objects;
+}
+hittable_list simple_light() {
+	hittable_list objects;
+	
+	auto pertext = make_shared<noise_texture>(4);
+	objects.add(make_shared<sphere>(point3(0, -1000, 0), 1000, make_shared<lambertian>(pertext)));
+	objects.add(make_shared<sphere>(point3(0, 2, 0), 2, make_shared<lambertian>(pertext)));
+
+	auto difflight = make_shared<diffuse_light>(color(4, 4, 4));
+	objects.add(make_shared<sphere>(point3(0, 7, 0), 2, difflight));
+	objects.add(make_shared<xy_rect>(3, 5, 1, 3, -2, difflight));
+	
+	return objects;
+}
+hittable_list cornell_box() {
+	hittable_list objects;
+	auto red = make_shared<lambertian>(make_shared<solid_color>(.65, .05, .05));
+	auto white = make_shared<lambertian>(make_shared<solid_color>(.73, .73, .73));
+	auto green = make_shared<lambertian>(make_shared<solid_color>(.12, .45, .15));
+	auto light = make_shared<diffuse_light>(make_shared<solid_color>(15, 15, 15));
+
+	objects.add(make_shared<yz_rect>(0, 555, 0, 555, 555, green));
+	objects.add(make_shared<yz_rect>(0, 555, 0, 555, 0, red));
+	objects.add(make_shared<xz_rect>(213, 343, 227, 332, 554, light));
+	objects.add(make_shared<xz_rect>(0, 555, 0, 555, 0, white));
+	objects.add(make_shared<xz_rect>(0, 555, 0, 555, 555, white));
+	objects.add(make_shared<xy_rect>(0, 555, 0, 555, 555, white));
+
+	shared_ptr<hittable> box1 = make_shared<box>(point3(0, 0, 0), point3(165, 330, 165), white);
+	box1 = make_shared<rotate_y>(box1, 15);
+	box1 = make_shared<translate>(box1, vec3(265, 0, 295));
+	objects.add(box1);
+
+	shared_ptr<hittable> box2 = make_shared<box>(point3(0, 0, 0), point3(165, 165, 165), white);
+	box2 = make_shared<rotate_y>(box2, -18);
+	box2 = make_shared<translate>(box2, vec3(130, 0, 65));
+	objects.add(box2);
+	return objects;
+}
+hittable_list cornell_smoke() {
+	hittable_list objects;
+
+	auto red = make_shared<lambertian>(make_shared<solid_color>(.65, .05, .05));
+	auto white = make_shared<lambertian>(make_shared<solid_color>(.73, .73, .73));
+	auto green = make_shared<lambertian>(make_shared<solid_color>(.12, .45, .15));
+	auto light = make_shared<diffuse_light>(make_shared<solid_color>(7, 7, 7));
+	
+	objects.add(make_shared<yz_rect>(0, 555, 0, 555, 555, green));
+	objects.add(make_shared<yz_rect>(0, 555, 0, 555, 0, red));
+	objects.add(make_shared<xz_rect>(213, 343, 227, 332, 554, light));
+	objects.add(make_shared<xz_rect>(0, 555, 0, 555, 0, white));
+	objects.add(make_shared<xz_rect>(0, 555, 0, 555, 555, white));
+	objects.add(make_shared<xy_rect>(0, 555, 0, 555, 555, white));
+
+	shared_ptr<hittable> box1 = make_shared<box>(point3(0, 0, 0), point3(165, 330, 165), white);
+	box1 = make_shared<rotate_y>(box1, 15);
+	box1 = make_shared<translate>(box1, vec3(265, 0, 295));
+
+	shared_ptr<hittable> box2 = make_shared<box>(point3(0, 0, 0), point3(165, 165, 165), white);
+	box2 = make_shared<rotate_y>(box2, -18);
+	box2 = make_shared<translate>(box2, vec3(130, 0, 65));
+
+	objects.add(make_shared<constant_medium>(box1, 0.01, make_shared<solid_color>(0, 0, 0)));
+	objects.add(make_shared<constant_medium>(box2, 0.01, make_shared<solid_color>(1, 1, 1)));
+
+	return objects;
+}
+color ray_color(const ray& r,const color& background,const hittable& world,int depth){
     hit_record rec;
 
     if(depth<=0)return color(0,0,0);
@@ -75,24 +153,26 @@ color ray_color(const ray& r,const hittable& world,int depth){
     if(world.hit(r,0.001,infinity,rec)){//嘿，我打到某个物体了，把他的信息记录到rec里
         ray scattered;
         color attenuation;
-        if (rec.mat_ptr->scatter(r,rec,attenuation,scattered))//rec现在知道这个物体是谁了
-        //麻烦rec告诉我这个物体的材质
-        //这个物体的材质能告诉我会不会继续发射射线
-        //会的话当前材质的颜色要和下一条射线传回来的颜色做一个反射率衰减
-        //这样就能够得到这条射线的颜色了
-            return attenuation*ray_color(scattered,world,depth-1);
+		color emitted = rec.mat_ptr->emitted(rec.u, rec.v, rec.p);
+		if (rec.mat_ptr->scatter(r, rec, attenuation, scattered))//rec现在知道这个物体是谁了
+		//麻烦rec告诉我这个物体的材质
+		//这个物体的材质能告诉我会不会继续发射射线
+		//会的话当前材质的颜色要和下一条射线传回来的颜色做一个反射率衰减
+		//这样就能够得到这条射线的颜色了
+			return emitted +attenuation*ray_color(scattered, background,world, depth - 1);
         //如果材质说好吧没有下一次散射了，那也没关系，就跟上面的人说我再也没有了
-        return color(0,0,0);
+        return emitted;
         // point3 target = rec.p + rec.normal + random_unit_vector();
         // return 0.5 * ray_color(ray(rec.p, target - rec.p), world, depth-1);
     }
-    //如果运行到这里，看来这条射线什么东西也没打到，只能直接在背景里取一个颜色了
-    //拿到这个颜色之后就带着这个颜色回到上一层，显然这个颜色会被上一层材质做一次衰减
-    vec3 unit_direction=unit_vector(r.direction());
-    auto t=0.5*(unit_direction.y()+1.0);
-    return (1.0-t)*color(1.0,1.0,1.0)+t*color(0.5,0.7,1.0);
+	else
+	{
+		return background;
+	}
 }
 int main(){
+
+
 	cerr << "----------" << setw(20) << "Program Start." << "----------" << endl << endl;
 	clock_t start_time,temp_time;
 	start_time = clock();
@@ -101,11 +181,13 @@ int main(){
 	fs.open("triangle.ppm");
 	fs.clear();
 
-    const auto aspect_ratio=16.0/9.0;
-    const int image_width=300;
+    const auto aspect_ratio=16.0/16;
+	const color background(0, 0, 0);
+    const int image_width=200;
     const int image_height=static_cast<int>(image_width/aspect_ratio);
-    const int samples_per_pixel=50;
-    const int max_depth=10;
+    const int samples_per_pixel=1000;
+    const int max_depth=100;
+	
 
     fs<<"P3\n"<<image_width<<' '<<image_height<<"\n255\n";
 
@@ -114,20 +196,21 @@ int main(){
 	cerr.setf(ios::left);
     cerr<<"----------"<<setw(20)<<"Assembling Geometry." << "----------"<<endl << endl;
 
-	auto world = two_perlin_sphere();
+	auto world = cornell_smoke();
     
     temp_time=clock();
     cerr << endl <<"**********" << setw(20) << "Geometry Done."<<"**********"<<endl;
 	cerr << "Time cost:" << double(clock() - temp_time) / CLOCKS_PER_SEC << "s" << endl << endl;
     
 
-    point3 lookfrom(13,2,3);
-    point3 lookat(0,0,0);
-    vec3 vup(0,1,0);
-    auto dist_to_focus=10;
-    auto aperture=0.0;
+	point3 lookfrom(278, 278, -800);
+	point3 lookat(278, 278, 0);
+	vec3 vup(0, 1, 0);
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	auto vfov = 40.0;
     
-    camera cam(lookfrom,lookat,vup,20,aspect_ratio,aperture,dist_to_focus,0.0,1.0);
+    camera cam(lookfrom,lookat,vup, vfov,aspect_ratio,aperture,dist_to_focus,0.0,1.0);
 
 	cerr << "----------"<< setw(20) << "Start raytracing." << "----------" << endl << endl;
 
@@ -141,13 +224,18 @@ int main(){
 			<< setw(20) << "Time cost:" << double(clock()- temp_time)/CLOCKS_PER_SEC <<"s"<< '\n'
 			<< setw(20) << ' ' << flush;
         for(int i=0;i<image_width;i++){
+			/*if (i!=image_width/2||j!=image_height/2)
+			{
+				write_color(fs, color(0,0,0), samples_per_pixel);
+				continue;
+			}*/
 			pixel_count++;
             color pixel_color(0,0,0);
             for (int s = 0; s < samples_per_pixel; s++){
                 auto u=double(i+random_double())/(image_width-1);
                 auto v=double(j+random_double())/(image_height-1);
                 ray r=cam.get_ray(u,v);
-                pixel_color+=ray_color(r,world,max_depth);
+                pixel_color+=ray_color(r,background,world,max_depth);
             }
             write_color(fs,pixel_color,samples_per_pixel);
         }

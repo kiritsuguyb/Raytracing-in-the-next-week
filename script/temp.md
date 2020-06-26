@@ -65,3 +65,29 @@ which returns numbers in the range \(-\pi/2\) to \(\pi/2\).
 
 
 So for a sphere, the \((u,v)\) coord computation is accomplished by a utility function that expects things on the unit sphere centered at the origin. The call inside sphere::hit should be: 
+
+### RECT
+Now, let’s make some rectangles. Rectangles are often convenient for modeling man-made environments. I’m a fan of doing axis-aligned rectangles because they are easy. (We’ll get to instancing so we can rotate them later.) 
+
+First, here is a rectangle in an xy plane. Such a plane is defined by its z value. For example, \(z = k\). An axis-aligned rectangle is defined by the lines \(x=x_0\), \(x=x_1\), \(y=y_0\), and \(y=y_1\). 
+
+
+
+Figure 5: Ray-rectangle intersection
+
+
+
+
+To determine whether a ray hits such a rectangle, we first determine where the ray hits the plane. Recall that a ray \(\mathbf{P}(t) = \mathbf{A} + t \mathbf{b}\) has its z component defined by \(P_z(t) = A_z + t b_z\). Rearranging those terms we can solve for what the t is where \(z=k\). 
+
+$$ t = \frac{k-A_z}{b_z} $$ 
+
+
+Once we have \(t\), we can plug that into the equations for \(x\) and \(y\): 
+
+$$ x = A_x + t b_x $$ $$ y = A_y + t b_y $$ 
+
+It is a hit if \(x_0 < x < x_1\) and \(y_0 < y < y_1\). 
+Because our rectangles are axis-aligned, their bounding boxes will have an infinitely-thin side. This can be a problem when dividing them up with our axis-aligned bounding volume hierarchy. To counter this, all hittable objects should get a bounding box that has finite width along every dimension. For our rectangles, we'll just pad the box a bit on the infnitely-thin side. 
+
+The actual xy_rect class is thus: 

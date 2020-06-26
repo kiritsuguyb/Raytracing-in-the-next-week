@@ -31,8 +31,6 @@ bool sphere::hit(const ray& r,double t_min,double t_max,hit_record& rec) const{
     auto c=dot(oc,oc)-radius*radius;
     auto discriminant =half_b*half_b-a*c;
 
-    hit_search_count++;
-
     if (discriminant>0){
         auto root=sqrt(discriminant);
         auto temp=(-half_b-root)/a;
@@ -43,7 +41,7 @@ bool sphere::hit(const ray& r,double t_min,double t_max,hit_record& rec) const{
             vec3 outward_normal=(rec.p-center)/radius;
             rec.set_face_normal(r,outward_normal);
             rec.mat_ptr=mat_ptr;
-			get_sphere_uv((rec.p - center), rec.u, rec.v);
+			get_sphere_uv((rec.p - center)/radius, rec.u, rec.v);
             return true;
         }
         temp=(-half_b+root)/a;
@@ -54,7 +52,7 @@ bool sphere::hit(const ray& r,double t_min,double t_max,hit_record& rec) const{
             vec3 outward_normal=(rec.p-center)/radius;
             rec.set_face_normal(r,outward_normal);
             rec.mat_ptr=mat_ptr;
-			get_sphere_uv((rec.p - center), rec.u, rec.v);
+			get_sphere_uv((rec.p - center)/radius, rec.u, rec.v);
             return true;
         }
     }

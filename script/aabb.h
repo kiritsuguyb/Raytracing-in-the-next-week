@@ -13,7 +13,6 @@ class aabb{
 
         bool hit(const ray& r,double tmin,double tmax) const{
 
-			hit_search_count++;
             for(int a=0;a<3;a++){
                 auto t0=fmin((_min[a]-r.origin()[a])/r.direction()[a],
                             (_max[a]-r.origin()[a])/r.direction()[a]

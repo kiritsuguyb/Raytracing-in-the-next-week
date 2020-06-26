@@ -17,7 +17,7 @@ const double pi=3.1415926535897932385;
 
 //Debug variales
 long long hit_search_count = 0;
-int ray_count = 0;
+long long ray_count = 0;
 int pixel_count = 0;
 
 

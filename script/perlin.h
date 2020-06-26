@@ -1,6 +1,5 @@
 #pragma once
 #include "rtweekend.h"
-
 inline double trilinear_interp(double c[2][2][2], double u, double v, double w) {
 	auto accum = 0.0;
 	for (int i = 0; i < 2; i++)
@@ -20,12 +19,40 @@ inline double trilinear_interp(double c[2][2][2], double u, double v, double w) 
 	}
 	return accum;
 }
+inline double perlin_interp(vec3 c[2][2][2], double u, double v, double w) {
+	auto uu = u * u*(3 - 2 * u);
+	auto vv = v * v*(3 - 2 * v);
+	auto ww = w * w*(3 - 2 * w);
+
+	auto accum = 0.0;
+
+	for (int i = 0; i < 2; i++)
+	{
+		for (int j = 0; j < 2; j++)
+		{
+			for (int k = 0; k < 2; k++)
+			{
+				//对于8个采样点中任意一个来说，其权重应该等于其对角的长方体的体积
+				//trilinear本身没啥，就是3d空间中的线性采样
+				//如果颠倒这个值，就会出现断崖式的渐变，也很有趣
+				vec3 weight_v(u - i, v - j, w - k);
+				accum += (i*u + (1 - i)*(1 - u))*
+					(j*v + (1 - j)*(1 - v))*
+					(k*w + (1 - k)*(1 - w))*dot(c[i][j][k], weight_v);
+			}
+		}
+	}
+	return accum;
+}
 
 class perlin {
 	public:
 		perlin() {
+			ranvec = new vec3[point_count];
 			ranfloat = new double[point_count];
+
 			for (int i = 0; i < point_count; ++i) {
+				ranvec[i] = random_unit_vector();
 				ranfloat[i] = random_double();
 			}
 
@@ -34,6 +61,7 @@ class perlin {
 			perm_z = perlin_generate_perm();
 		}
 		~perlin() {
+			delete[] ranvec;
 			delete[] ranfloat;
 			delete[] perm_x;
 			delete[] perm_y;
@@ -48,7 +76,7 @@ class perlin {
 			int i=floor(p.x());
 			int j=floor(p.y());
 			int k=floor(p.z());
-			double c[2][2][2];
+			vec3 c[2][2][2];
 
 			for (int di = 0; di < 2; di++)
 			{
@@ -56,7 +84,7 @@ class perlin {
 				{
 					for (int dk = 0; dk < 2; dk++)
 					{
-						c[di][dj][dk] = ranfloat[
+						c[di][dj][dk] = ranvec[
 							perm_x[(i+di)&255]^
 							perm_y[(j+dj)&255]^
 							perm_z[(k+dk)&255]
@@ -66,7 +94,7 @@ class perlin {
 				}
 			}
 
-			return trilinear_interp(c,u,v,w);
+			return perlin_interp(c,u,v,w);//[-1,1]，均值为0
 		}
 		double pattern_noise(const point3& p)const {
 			auto u = p.x() - floor(p.x());
@@ -82,8 +110,22 @@ class perlin {
 			//用来作为采样下标仍然可以得到有意义的结果
 			return ranfloat[i^j ^k];
 		}
+		double turb(const point3& p, int depth = 7)const {
+			auto accum = 0.0;
+			auto temp_p = p;
+			auto weight = 1.0;
+			for (int i = 0; i < depth; i++)
+			{
+				accum += weight * noise(temp_p);
+				weight *= 0.5;
+				temp_p *= 2;
+			}//均值仍然为0
+			return fabs(accum);
+			//返回绝对值则均值还是应该在[0.0.5],因为depth==1时方差较大，depth趋于无穷时方差趋于0.
+		}
 	private:
 		static const int point_count = 256;
+		vec3* ranvec;
 		double* ranfloat;
 		int* perm_x;
 		int* perm_y;
@@ -113,4 +155,5 @@ class perlin {
 				p[target] = tmp;
 			}
 		}
+		
 };
