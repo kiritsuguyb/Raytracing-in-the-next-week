@@ -28,7 +28,7 @@ inline double degrees_to_radians(double degrees){
 }
 
 inline double random_double(){
-    return rand()/(RAND_MAX+1.0);//RAND_MAX=2^8-1,是一个2字节数
+    return rand()/(RAND_MAX+1.0)+0.0000001;//RAND_MAX=2^8-1,是一个2字节数
 }
 
 inline double random_double(double min,double max){

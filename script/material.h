@@ -4,15 +4,22 @@
 #include "ray.h"
 #include "hittable.h"
 #include "texture.h"
-
+#include "onb.h"
 
 class material{
     public:
         virtual bool scatter(
-            const ray& r_in,const hit_record& rec,color& attenuation,ray& scattered
-        )const=0;
-
-		virtual color emitted(double u, double v, const point3& p)const {
+            const ray& r_in,const hit_record& rec,color& attenuation,ray& scattered,double& pdf
+		)const{
+			return false;
+		}
+		virtual double scattering_pdf(
+			const ray& r_in, const hit_record& rec, const ray& scattered
+		)const {
+			return 0;
+		}
+		virtual color emitted(const hit_record& rec)const {
+			
 			return color(0, 0, 0);
 		}
 };
@@ -28,13 +35,22 @@ class lambertian: public material{
 		lambertian(const color a) : albedo(make_shared<solid_color>(a)) {}
 
         virtual bool scatter(
-            const ray& r_in,const hit_record& rec,color& attenuation,ray& scattered
+            const ray& r_in,const hit_record& rec,color& alb,ray& scattered,double& pdf
         )const{
-            vec3 scatter_direction=rec.normal+random_unit_vector();
-            scattered=ray(rec.p,scatter_direction,r_in.time());
-            attenuation=albedo->value(rec.u,rec.v,rec.p);
+			onb uvw;
+			uvw.build_from_w(rec.normal);
+			auto direction = uvw.local(random_cosine_direction());
+            scattered=ray(rec.p,unit_vector(direction),r_in.time());
+			alb =albedo->value(rec.u,rec.v,rec.p);
+			pdf = dot(uvw.w(), scattered.direction()) / pi;
             return true;
         }
+		double scattering_pdf(
+			const ray& ray_in, const hit_record& rec, const ray& scattered
+		) const{
+			auto cosine = dot(rec.normal, unit_vector(scattered.direction()));
+			return cosine < 0 ? 0 : cosine / pi;
+		}
     public:
         shared_ptr<texture> albedo;
 };
@@ -99,8 +115,10 @@ class diffuse_light : public material {
 			return false;
 		};
 
-		virtual color emitted(double u, double v, const point3& p)const {
-			return emit->value(u, v, p);
+		virtual color emitted(const hit_record& rec)const {
+			if (rec.front_face)
+			return emit->value(rec.u, rec.v, rec.p);
+			return color(0, 0, 0);
 		}
 
 	public:

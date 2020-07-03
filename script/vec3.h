@@ -1,6 +1,7 @@
 #ifndef VEC3_H
 #define VEC3_H
 #include <cmath>
+#include <iostream>
 //using std::sqrt;
 
 class vec3{
@@ -100,10 +101,23 @@ vec3 random_in_unit_sphere(){
     
 }
 vec3 random_unit_vector(){
-    auto a=random_double(0,2*pi);
-    auto z=random_double(-1,1);
-    auto r=sqrt(1-z*z);
-    return vec3(r*cos(a),r*sin(a),z);
+	auto r1 = random_double();
+	auto r2 = random_double();
+    auto x=cos(2*pi*r1)*2*sqrt(r2*(1-r2));
+	auto y = sin(2 * pi*r1) * 2 * sqrt(r2*(1 - r2));
+    auto z=1-2*r2;
+    return vec3(x,y,z);
+}
+inline vec3 random_cosine_direction() {
+	auto r1 = random_double();
+	auto r2 = random_double();
+	auto z = sqrt(1 - r2);
+
+	auto phi = 2 * pi*r1;
+	auto x = cos(phi)*sqrt(r2);
+	auto y = sin(phi)*sqrt(r2);
+
+	return vec3(x, y, z);
 }
 vec3 random_in_unit_disk(){
     while(true){

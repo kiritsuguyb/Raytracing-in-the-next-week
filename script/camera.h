@@ -7,6 +7,7 @@
 class camera
 {
     public:
+		camera(){}
         camera(
             point3 lookfrom,
             point3 lookat,
