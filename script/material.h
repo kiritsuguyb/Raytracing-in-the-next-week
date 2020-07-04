@@ -6,6 +6,8 @@
 #include "texture.h"
 #include "onb.h"
 
+
+
 class material{
     public:
         virtual bool scatter(

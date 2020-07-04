@@ -22,7 +22,7 @@ const auto aspect_ratio = 16.0 / 16;
 const color background(0, 0, 0);
 const int image_width = 500;
 const int image_height = static_cast<int>(image_width / aspect_ratio);
-const int samples_per_pixel = 30;
+const int samples_per_pixel = 300;
 const int max_depth = 100;
 
 bvh_node random_scene(){
@@ -168,7 +168,11 @@ hittable_list cornell_smoke() {
 
 	return objects;
 }
-color ray_color(const ray& r,const color& background,const hittable& world,int depth){
+color ray_color(
+	const ray& r,
+	const color& background,
+	const hittable& world,
+	int depth){
     hit_record rec;
 
     if(depth<=0)return color(0,0,0);
@@ -186,7 +190,13 @@ color ray_color(const ray& r,const color& background,const hittable& world,int d
 		//这个物体的材质能告诉我会不会继续发射射线
 		//会的话当前材质的颜色要和下一条射线传回来的颜色做一个反射率衰减
 		//这样就能够得到这条射线的颜色了
-		cosine_pdf p(rec.normal);
+
+		shared_ptr<hittable> light_shape =
+			make_shared<xz_rect>(213, 343, 227, 332, 554, shared_ptr<material>());
+		auto p0=make_shared<hittable_pdf>(light_shape, rec.p);
+		auto p1 = make_shared<cosine_pdf>(rec.normal);
+		mixture_pdf p(p0, p1);
+
 		scattered = ray(rec.p, p.generate(), r.time());
 		auto pdf_val = p.value(scattered.direction());
 		return emitted + albedo *rec.mat_ptr->scattering_pdf(r,rec,scattered)
